@@ -1,0 +1,24 @@
+{
+  "style": "xml",
+  "compress": true,
+  "quiet": false,
+  "ignorePatterns": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "*.log",
+    "*.tmp",
+    ".DS_Store"
+  ],
+  "includePatterns": [
+    "**/*.sh",
+    "**/*.md",
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.json",
+    "**/*.toml",
+    "**/Brewfile*"
+  ]
+}
+

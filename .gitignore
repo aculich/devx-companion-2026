@@ -1,0 +1,31 @@
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Sentinel observations
+*-sentinel-observations.md
+*.sentinel-last-check
+*.sentinel-pause*
+
+# Screenshot analysis output
+screenshot-analysis/
+
+# Repomix output
+repomix-output.xml
+repomix-output.md
+repomix-output.json
+
+# Node modules (if using npm packages)
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
