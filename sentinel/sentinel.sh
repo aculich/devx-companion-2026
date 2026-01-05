@@ -24,6 +24,8 @@ MODE="observe"  # observe, alert, pause
 LLM_MODEL="gpt-4o"
 CHECK_INTERVAL=5  # seconds
 DISK_CHECK_INTERVAL=30  # seconds
+CONTEXT=""  # bootstrap, install, etc.
+SCREENSHOT_DIR=""
 
 # Colors
 RED='\033[0;31m'
@@ -62,6 +64,8 @@ OPTIONS:
     --mode MODE         Sentinel mode: observe, alert, pause (default: observe)
     --model MODEL       LLM model to use (default: gpt-4o)
     --interval SECONDS  Check interval in seconds (default: 5)
+    --context CONTEXT   Context: bootstrap, install, etc. (affects monitoring patterns)
+    --screenshot-dir DIR Directory for screenshots (optional)
     --help, -h          Show this help
 
 MODES:
@@ -141,7 +145,15 @@ detect_error_patterns() {
     # Check for error patterns in new content
     local errors=0
     if [ -f "$log_file" ]; then
-        tail -c +"$last_position" "$log_file" 2>/dev/null | grep -iE "(error|failed|warn|exception|timeout|connection refused|permission denied|not found|requires)" > /dev/null && errors=1 || true
+        # Base error patterns
+        local error_pattern="(error|failed|warn|exception|timeout|connection refused|permission denied|not found|requires)"
+        
+        # Bootstrap-specific patterns
+        if [ "$CONTEXT" = "bootstrap" ]; then
+            error_pattern="${error_pattern}|(password|1password|touch.*id|sudo.*password|authentication|clone.*failed)"
+        fi
+        
+        tail -c +"$last_position" "$log_file" 2>/dev/null | grep -iE "$error_pattern" > /dev/null && errors=1 || true
     fi
     
     # Update last check position
@@ -240,11 +252,21 @@ monitor_loop() {
         echo ""
         echo "**Started**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
         echo "**Mode**: $MODE"
+        echo "**Context**: ${CONTEXT:-general}"
         echo "**Log file**: $log_file"
+        if [ -n "$SCREENSHOT_DIR" ]; then
+            echo "**Screenshot directory**: $SCREENSHOT_DIR"
+        fi
         echo ""
         echo "---"
         echo ""
     } > "$OUTPUT_FILE"
+    
+    # Sports announcer style commentary
+    if [ "$CONTEXT" = "bootstrap" ]; then
+        log_info "🎙️  Bootstrap sentinel on the air! Monitoring installation process..."
+        log_info "📊 Watching for: password prompts, 1Password issues, Touch ID failures, authentication problems"
+    fi
     
     # Monitor loop
     while true; do
@@ -261,7 +283,25 @@ monitor_loop() {
                 if [ -n "$new_content" ]; then
                     # Detect error patterns
                     if detect_error_patterns "$log_file"; then
-                        log_warning "Error patterns detected in log"
+                        log_warning "⚠️  Error patterns detected in log"
+                        
+                        # Bootstrap-specific commentary
+                        if [ "$CONTEXT" = "bootstrap" ]; then
+                            # Check for specific bootstrap issues
+                            if echo "$new_content" | grep -qiE "password|sudo.*password"; then
+                                log_info "🎙️  Password prompt detected - user interaction needed"
+                                write_observation "INFO" "User Interaction" "Password prompt detected" "User needs to provide password or use Touch ID"
+                            fi
+                            if echo "$new_content" | grep -qiE "1password|op.*account"; then
+                                log_info "🎙️  1Password setup in progress - monitoring authentication"
+                                write_observation "INFO" "1Password" "1Password CLI setup detected" "Monitoring for successful authentication"
+                            fi
+                            if echo "$new_content" | grep -qiE "touch.*id|pam_tid"; then
+                                log_info "🎙️  Touch ID setup detected - verifying configuration"
+                                write_observation "INFO" "Touch ID" "Touch ID setup detected" "Monitoring for successful configuration"
+                            fi
+                        fi
+                        
                         write_observation "WARN" "Error Pattern" "Error patterns detected in installation log" "Review log for specific errors"
                         
                         # Analyze with LLM (sample last 1000 chars)
@@ -269,6 +309,13 @@ monitor_loop() {
                         sample=$(echo "$new_content" | tail -c 1000)
                         if analyze_with_llm "$sample" >> "$OUTPUT_FILE" 2>/dev/null; then
                             log_info "LLM analysis added to observations"
+                        fi
+                    else
+                        # Positive progress indicators
+                        if [ "$CONTEXT" = "bootstrap" ]; then
+                            if echo "$new_content" | grep -qiE "success|completed|installed|configured"; then
+                                log_info "🎙️  Progress update: Installation step completed successfully"
+                            fi
                         fi
                     fi
                 fi
@@ -352,6 +399,14 @@ main() {
                 ;;
             --interval)
                 CHECK_INTERVAL="$2"
+                shift 2
+                ;;
+            --context)
+                CONTEXT="$2"
+                shift 2
+                ;;
+            --screenshot-dir)
+                SCREENSHOT_DIR="$2"
                 shift 2
                 ;;
             --help|-h)
