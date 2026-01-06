@@ -1,0 +1,13 @@
+# Python dependencies for enhanced sentinel system
+# Install with: pip install -r requirements.txt
+# Or via uv: uv pip install -r requirements.txt
+
+# DSPy for structured LLM prompting and comparison
+dspy-ai>=2.4.0
+
+# Deepeval for LLM evaluation
+deepeval>=0.18.0
+
+# Optional: For better Ollama integration
+# ollama>=0.1.0
+

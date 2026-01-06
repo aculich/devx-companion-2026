@@ -1,0 +1,59 @@
+# Sentinel Configuration
+# Configuration file for enhanced sentinel system
+
+# LLM Configuration
+llm:
+  backend: "cloud"  # cloud, ollama, both
+  cloud_model: "gpt-4o"
+  ollama_model: "llama3"
+  fallback_to_cloud: true
+
+# Monitoring Configuration
+monitoring:
+  check_interval: 5  # seconds
+  disk_check_interval: 30  # seconds
+  debounce_window: 30  # seconds between same error reports
+  llm_batch_window: 60  # seconds to batch errors before LLM analysis
+  severity_threshold: "WARN"  # Only analyze WARN and above
+
+# Output Configuration
+output:
+  quiet_mode: false
+  verbose: false
+  include_timestamps: true
+  include_context: true
+
+# Evaluation Configuration
+evaluation:
+  enabled: true
+  use_deepeval: true
+  metrics:
+    - relevance
+    - hallucination
+    - answer_relevancy
+    - faithfulness
+  thresholds:
+    relevance: 0.7
+    hallucination: 0.5
+    answer_relevancy: 0.7
+    faithfulness: 0.7
+
+# DSPy Configuration
+dspy:
+  enabled: true
+  compare_llms: true
+  log_comparisons: true
+  comparison_output_dir: "comparisons"
+
+# Learning Integration
+learning:
+  auto_promote: false  # Auto-promote observations to learning log
+  promotion_threshold: 0.8  # Quality score threshold for promotion
+  feed_forward_enabled: true
+
+# Error State Management
+error_state:
+  cache_ttl: 3600  # seconds (1 hour)
+  max_cached_errors: 1000
+  cleanup_interval: 300  # seconds (5 minutes)
+
